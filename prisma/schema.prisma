@@ -1,0 +1,193 @@
+// ============================================================
+// Sanaa Glam — Database Schema
+// 
+// PostgreSQL database hosted on Supabase.
+// This schema defines all tables for the booking system:
+// Services, Clients, Appointments, IntakeForms,
+// AvailabilityRules, BlackoutDates, and MessageLogs.
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---- ENUMS ----
+
+/// Where the appointment takes place
+enum LocationType {
+  STUDIO
+  TRAVEL
+}
+
+/// Current status of an appointment
+enum AppointmentStatus {
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  NO_SHOW
+}
+
+/// Travel zone (distance from studio)
+enum Zone {
+  ZONE_1 // 0–10 km
+  ZONE_2 // 10–25 km
+  ZONE_3 // 25–50 km
+}
+
+/// Client's skin type for the intake form
+enum SkinType {
+  DRY
+  OILY
+  COMBINATION
+  NORMAL
+}
+
+/// Desired makeup intensity level
+enum GlamLevel {
+  NATURAL
+  SOFT_GLAM
+  FULL_GLAM
+  EDITORIAL
+}
+
+/// Type of automated message sent to the client
+enum MessageType {
+  CONFIRMATION
+  REMINDER_48H
+  REMINDER_24H
+  CANCELLATION
+  FOLLOW_UP
+}
+
+// ---- MODELS ----
+
+/// A makeup service offered by Sanaa Glam (e.g. "Bridal Makeup")
+model Service {
+  id              String   @id @default(cuid())
+  name            String
+  slug            String   @unique // URL-friendly name (e.g. "bridal-makeup")
+  description     String   @db.Text // Rich description of the service
+  durationMinutes Int      // How long the service takes
+  studioPrice     Decimal  @db.Decimal(10, 2) // Price for studio appointments
+  zone1Price      Decimal  @db.Decimal(10, 2) // Price for Zone 1 travel
+  zone2Price      Decimal  @db.Decimal(10, 2) // Price for Zone 2 travel
+  zone3Price      Decimal  @db.Decimal(10, 2) // Price for Zone 3 travel
+  isActive        Boolean  @default(true) // Can clients book this service?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // A service can have many appointments
+  appointments Appointment[]
+
+  @@map("services")
+}
+
+/// A client who has booked at least one appointment
+model Client {
+  id            String   @id @default(cuid())
+  fullName      String
+  email         String
+  phone         String
+  address       String?  @db.Text // Full address (required for travel bookings)
+  internalNotes String?  @db.Text // Private admin notes about this client
+  tags          String[] // Labels like "VIP", "Bridal", "Repeat Client"
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // A client can have many appointments
+  appointments Appointment[]
+
+  // Index email for quick lookups (not unique — same person may rebook)
+  @@index([email])
+  @@map("clients")
+}
+
+/// A booked appointment linking a service to a client
+model Appointment {
+  id                 String            @id @default(cuid())
+  serviceId          String
+  clientId           String
+  locationType       LocationType      // Studio or Travel
+  zone               Zone?             // Only set if locationType is TRAVEL
+  startAt            DateTime          // Appointment start time (stored in UTC)
+  endAt              DateTime          // Appointment end time (stored in UTC)
+  price              Decimal           @db.Decimal(10, 2) // Final price charged
+  status             AppointmentStatus @default(CONFIRMED)
+  cancellationReason String?           @db.Text // Why was this cancelled?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  // Relations
+  service    Service     @relation(fields: [serviceId], references: [id])
+  client     Client      @relation(fields: [clientId], references: [id])
+  intakeForm IntakeForm? // One-to-one: each appointment has one intake form
+  messages   MessageLog[] // All automated messages sent for this appointment
+
+  // Indexes for common queries
+  @@index([startAt])
+  @@index([status])
+  @@index([serviceId])
+  @@index([clientId])
+  @@map("appointments")
+}
+
+/// Additional client details collected during booking
+model IntakeForm {
+  id             String    @id @default(cuid())
+  appointmentId  String    @unique // One intake form per appointment
+  skinType       SkinType?
+  allergies      String?   @db.Text
+  occasion       String?   // e.g. "Wedding", "Birthday", "Photoshoot"
+  glamLevel      GlamLevel?
+  inspirationUrl String?   // Link to Pinterest/Instagram inspiration
+  clientNotes    String?   @db.Text // Any additional notes from the client
+
+  // Relation: this form belongs to one appointment
+  appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+
+  @@map("intake_forms")
+}
+
+/// Rules for when the studio is available (per weekday)
+model AvailabilityRule {
+  id            String  @id @default(cuid())
+  weekday       Int     // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+  startTime     String  // "09:00" format (24h, Europe/Berlin local time)
+  endTime       String  // "17:00" format
+  bufferMinutes Int     @default(15) // Minutes between appointments
+  allowTravel   Boolean @default(true) // Are travel bookings allowed on this day?
+
+  // Each weekday should have at most one rule
+  @@unique([weekday])
+  @@map("availability_rules")
+}
+
+/// Dates when the studio is closed (holidays, vacation, etc.)
+model BlackoutDate {
+  id      String   @id @default(cuid())
+  startAt DateTime // Start of blackout period
+  endAt   DateTime // End of blackout period
+  reason  String?  // e.g. "Christmas Holiday", "Vacation"
+
+  @@map("blackout_dates")
+}
+
+/// Log of every automated message sent (for tracking + preventing duplicates)
+model MessageLog {
+  id            String      @id @default(cuid())
+  appointmentId String
+  messageType   MessageType // Which kind of message was sent
+  sentAt        DateTime    @default(now())
+
+  // Relation: this log belongs to one appointment
+  appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+
+  // Prevent sending the same message type twice for one appointment
+  @@unique([appointmentId, messageType])
+  @@map("message_logs")
+}
