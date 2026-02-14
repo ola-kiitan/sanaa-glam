@@ -12,6 +12,8 @@
     "@hookform/resolvers": "^5.2.2",
     "@prisma/client": "^5.22.0",
     "@react-email/components": "^1.0.7",
+    "@remotion/player": "^4.0.422",
+    "@remotion/transitions": "^4.0.422",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
@@ -25,9 +27,13 @@
     "react-dom": "19.2.3",
     "react-email": "^5.2.8",
     "react-hook-form": "^7.71.1",
+    "remotion": "^4.0.422",
     "resend": "^6.9.2",
     "tailwind-merge": "^3.4.0",
     "zod": "^4.3.6"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
@@ -39,6 +45,7 @@
     "prisma": "^5.22.0",
     "shadcn": "^3.8.4",
     "tailwindcss": "^4",
+    "tsx": "^4.21.0",
     "tw-animate-css": "^1.4.0",
     "typescript": "^5"
   }

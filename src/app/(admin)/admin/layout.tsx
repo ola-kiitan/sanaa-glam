@@ -7,7 +7,10 @@ import {
   Clock,
   Users,
   Mail,
+  Images,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { signOut } from "@/lib/auth";
 
 /**
  * Admin Layout — Wraps all admin dashboard pages.
@@ -31,6 +34,7 @@ const ADMIN_NAV = [
   { href: "/admin/appointments", label: "Appointments", icon: Calendar },
   { href: "/admin/services", label: "Services", icon: Scissors },
   { href: "/admin/availability", label: "Availability", icon: Clock },
+  { href: "/admin/portfolio", label: "Portfolio", icon: Images },
   { href: "/admin/clients", label: "Clients", icon: Users },
   { href: "/admin/messages", label: "Messages", icon: Mail },
 ] as const;
@@ -40,6 +44,11 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
+  async function handleSignOut() {
+    "use server";
+    await signOut({ redirectTo: "/admin/login" });
+  }
+
   return (
     <div className="flex min-h-screen">
       {/* ---- Sidebar Navigation ---- */}
@@ -69,14 +78,21 @@ export default function AdminLayout({
             ))}
           </nav>
 
-          {/* Back to website link */}
-          <div className="border-t border-plum-light/30 p-4">
-            <Link
-              href="/"
-              className="text-xs text-peach-light/50 hover:text-peach"
-            >
+          {/* Back to website + logout actions */}
+          <div className="space-y-3 border-t border-plum-light/30 p-4">
+            <Link href="/" className="block text-xs text-peach-light/50 hover:text-peach">
               ← Back to Website
             </Link>
+            <form action={handleSignOut}>
+              <Button
+                type="submit"
+                variant="outline"
+                size="sm"
+                className="w-full border-peach/40 bg-transparent text-peach hover:bg-peach/10 hover:text-peach"
+              >
+                Log out
+              </Button>
+            </form>
           </div>
         </div>
       </aside>

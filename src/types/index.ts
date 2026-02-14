@@ -14,6 +14,8 @@ export type {
   AvailabilityRule,
   BlackoutDate,
   MessageLog,
+  PortfolioItem,
+  PortfolioCategory,
 } from "@prisma/client";
 
 /**
@@ -94,4 +96,16 @@ export type BookingWizardState = {
   zone: "ZONE_1" | "ZONE_2" | "ZONE_3" | null;
   date: string | null;
   timeSlot: string | null;
+};
+
+export type PortfolioItemForDisplay = {
+  id: string;
+  title: string;
+  alt: string;
+  category: "BRIDAL" | "GLAM" | "NATURAL" | "EDITORIAL";
+  imageUrl: string;
+  width: number | null;
+  height: number | null;
+  blurDataUrl: string | null;
+  sortOrder: number;
 };

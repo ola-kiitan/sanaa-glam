@@ -1,67 +1,81 @@
+import Link from "next/link";
+import { Calendar, CheckCircle, Clock, Users } from "lucide-react";
+import { StatsCard } from "@/components/admin/stats-card";
+import { StatusBadge } from "@/components/admin/status-badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, Users, Clock, CheckCircle } from "lucide-react";
+import { prisma } from "@/lib/prisma";
 
-/**
- * Admin Dashboard — Overview page with key metrics and quick actions.
- * 
- * TODO: Phase 5 — Connect to real data from the database:
- * - Today's appointments count
- * - Upcoming appointments this week
- * - Total clients
- * - Completion rate
- * - Recent appointments list
- * - Quick actions (create appointment, manage services)
- */
-export default function AdminDashboardPage() {
-  // Placeholder stats — will be replaced with real database queries
-  const stats = [
-    { label: "Today's Appointments", value: "0", icon: Calendar, color: "text-primary" },
-    { label: "This Week", value: "0", icon: Clock, color: "text-plum-light" },
-    { label: "Total Clients", value: "0", icon: Users, color: "text-plum" },
-    { label: "Completed", value: "0", icon: CheckCircle, color: "text-green-600" },
-  ];
+export default async function AdminDashboardPage() {
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const tomorrowStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+  const weekEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 7);
+
+  const [todayCount, weekCount, totalClients, completedCount, totalAppointments, recentAppointments] = await Promise.all([
+    prisma.appointment.count({ where: { startAt: { gte: todayStart, lt: tomorrowStart } } }),
+    prisma.appointment.count({ where: { startAt: { gte: now, lt: weekEnd } } }),
+    prisma.client.count(),
+    prisma.appointment.count({ where: { status: "COMPLETED" } }),
+    prisma.appointment.count(),
+    prisma.appointment.findMany({
+      include: { service: { select: { name: true } }, client: { select: { fullName: true } } },
+      orderBy: { startAt: "desc" },
+      take: 10,
+    }),
+  ]);
+
+  const completionRate = totalAppointments > 0 ? Math.round((completedCount / totalAppointments) * 100) : 0;
 
   return (
-    <div>
-      {/* Page header */}
-      <div className="mb-8">
-        <h1 className="font-serif text-3xl font-bold text-plum-dark">
-          Dashboard
-        </h1>
-        <p className="mt-1 text-muted-foreground">
-          Welcome back! Here&apos;s an overview of your appointments.
-        </p>
+    <div className="space-y-8">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="font-serif text-3xl font-bold text-plum-dark">Dashboard</h1>
+          <p className="text-muted-foreground">Overview of bookings and operations.</p>
+        </div>
+        <div className="flex gap-2">
+          <Button asChild variant="outline"><Link href="/admin/appointments/new">New Appointment</Link></Button>
+          <Button asChild><Link href="/admin/services">Manage Services</Link></Button>
+        </div>
       </div>
 
-      {/* Stats grid */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => (
-          <Card key={stat.label} className="border-border/50">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                {stat.label}
-              </CardTitle>
-              <stat.icon className={`h-4 w-4 ${stat.color}`} />
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold text-plum-dark">{stat.value}</p>
-            </CardContent>
-          </Card>
-        ))}
+        <StatsCard title="Today's Appointments" value={todayCount} icon={Calendar} />
+        <StatsCard title="This Week" value={weekCount} icon={Clock} />
+        <StatsCard title="Total Clients" value={totalClients} icon={Users} />
+        <StatsCard title="Completion Rate" value={`${completionRate}%`} icon={CheckCircle} />
       </div>
 
-      {/* Placeholder for recent appointments */}
-      <Card className="mt-8 border-border/50">
+      <Card>
         <CardHeader>
-          <CardTitle className="font-serif text-xl text-plum-dark">
-            Recent Appointments
-          </CardTitle>
+          <CardTitle className="font-serif text-xl text-plum-dark">Recent Appointments</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-center text-sm text-muted-foreground py-8">
-            No appointments yet. The appointment list will appear here once
-            bookings are made.
-          </p>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="border-b text-left text-muted-foreground">
+                <tr>
+                  <th className="p-2">Date</th>
+                  <th className="p-2">Client</th>
+                  <th className="p-2">Service</th>
+                  <th className="p-2">Status</th>
+                  <th className="p-2">Price</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recentAppointments.map((appointment) => (
+                  <tr key={appointment.id} className="border-b">
+                    <td className="p-2">{new Date(appointment.startAt).toLocaleString()}</td>
+                    <td className="p-2">{appointment.client.fullName}</td>
+                    <td className="p-2">{appointment.service.name}</td>
+                    <td className="p-2"><StatusBadge status={appointment.status} /></td>
+                    <td className="p-2">EUR {Number(appointment.price).toFixed(2)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </CardContent>
       </Card>
     </div>

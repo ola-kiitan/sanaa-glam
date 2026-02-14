@@ -12,8 +12,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")       // Pooled connection (for queries at runtime)
+  directUrl = env("DIRECT_URL")         // Direct connection (for migrations & db push)
 }
 
 // ---- ENUMS ----
@@ -62,6 +63,14 @@ enum MessageType {
   REMINDER_24H
   CANCELLATION
   FOLLOW_UP
+}
+
+/// Portfolio grouping labels used on the public gallery
+enum PortfolioCategory {
+  BRIDAL
+  GLAM
+  NATURAL
+  EDITORIAL
 }
 
 // ---- MODELS ----
@@ -190,4 +199,24 @@ model MessageLog {
   // Prevent sending the same message type twice for one appointment
   @@unique([appointmentId, messageType])
   @@map("message_logs")
+}
+
+/// A single portfolio image showcased on the public site
+model PortfolioItem {
+  id          String            @id @default(cuid())
+  title       String
+  alt         String
+  category    PortfolioCategory
+  imageUrl    String
+  publicId    String            @unique // Cloudinary asset id
+  width       Int?
+  height      Int?
+  blurDataUrl String?           @db.Text
+  isPublished Boolean           @default(true)
+  sortOrder   Int               @default(0)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@index([isPublished, sortOrder, createdAt])
+  @@map("portfolio_items")
 }

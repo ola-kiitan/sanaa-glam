@@ -53,13 +53,19 @@ export const LOCATION_TYPE_LABELS = {
   TRAVEL: "Travel",
 } as const;
 
+export const PORTFOLIO_CATEGORY_LABELS = {
+  BRIDAL: "Bridal",
+  GLAM: "Glam",
+  NATURAL: "Natural",
+  EDITORIAL: "Editorial",
+} as const;
+
 // ---- Navigation Links ----
 // Main navigation items for the public website header
 export const NAV_LINKS = [
   { href: "/", label: "Home" },
   { href: "/services", label: "Services" },
   { href: "/portfolio", label: "Portfolio" },
-  { href: "/reviews", label: "Reviews" },
   { href: "/faq", label: "FAQ" },
   { href: "/booking", label: "Book Now" },
 ] as const;

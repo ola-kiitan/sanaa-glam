@@ -124,6 +124,29 @@ export const appointmentStatusSchema = z.object({
   { message: "Please provide a reason for cancellation", path: ["cancellationReason"] }
 );
 
+/**
+ * Validates portfolio item create/update payloads.
+ */
+export const portfolioItemSchema = z.object({
+  title: z.string().min(2, "Title must be at least 2 characters").max(120),
+  alt: z.string().min(4, "Alt text must be at least 4 characters").max(200),
+  category: z.enum(["BRIDAL", "GLAM", "NATURAL", "EDITORIAL"]),
+  imageUrl: z.string().url("Image URL must be valid"),
+  publicId: z.string().min(3, "publicId is required").max(255),
+  width: z.number().int().positive().optional(),
+  height: z.number().int().positive().optional(),
+  blurDataUrl: z.string().optional(),
+  isPublished: z.boolean().optional(),
+  sortOrder: z.number().int().min(0).max(100000).optional(),
+});
+
+/**
+ * Validates portfolio list reordering payload.
+ */
+export const portfolioReorderSchema = z.object({
+  ids: z.array(z.string().min(1)).min(1),
+});
+
 // ---- Type Exports ----
 // These types can be used in components for form state
 
@@ -133,3 +156,4 @@ export type IntakeFormData = z.infer<typeof intakeFormSchema>;
 export type ServiceFormData = z.infer<typeof serviceSchema>;
 export type AvailabilityRuleFormData = z.infer<typeof availabilityRuleSchema>;
 export type AppointmentStatusUpdate = z.infer<typeof appointmentStatusSchema>;
+export type PortfolioItemInput = z.infer<typeof portfolioItemSchema>;
