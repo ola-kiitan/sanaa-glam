@@ -1,13 +1,41 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { Suspense, useState, type FormEvent } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+/**
+ * Admin Login Page
+ *
+ * The login form is wrapped in <Suspense> because useSearchParams()
+ * requires it during static generation (Next.js build).
+ * Without Suspense, the build fails with a CSR bailout error.
+ */
 export default function AdminLoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-secondary/20 px-4">
+          <div className="w-full max-w-md rounded-2xl border bg-card p-8">
+            <h1 className="font-serif text-3xl font-bold text-plum-dark">Admin Login</h1>
+            <p className="mt-1 text-sm text-muted-foreground">Loading...</p>
+          </div>
+        </div>
+      }
+    >
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+/**
+ * The actual login form — extracted so it can be wrapped in Suspense.
+ * useSearchParams() reads the ?callbackUrl= param to redirect after login.
+ */
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/admin";
