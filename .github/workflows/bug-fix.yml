@@ -53,9 +53,12 @@ jobs:
           direct_prompt: |
             A bug was reported in the Slack #${{ github.event.inputs.slack_channel }} channel by ${{ github.event.inputs.reported_by }}.
 
-            **Slack thread:** ${{ github.event.inputs.slack_thread_url }}
+            The full thread content has already been extracted and is provided below.
+            DO NOT attempt to fetch or open the Slack URL — it requires authentication and is only included for reference in the PR body.
 
-            **Bug report:**
+            **Slack thread (reference link only):** ${{ github.event.inputs.slack_thread_url }}
+
+            **Bug report (full thread content):**
             ${{ github.event.inputs.bug_description }}
 
             Your task:
