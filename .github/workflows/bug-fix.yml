@@ -26,6 +26,7 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+      issues: write
 
     steps:
       - name: Checkout repository
@@ -49,9 +50,6 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           mode: agent
           branch_prefix: "fix/slack-bug"
-          commit_message_prefix: "fix:"
-          create_pull_request: "true"
-          pull_request_labels: "bug,automated-fix,slack-reported"
           direct_prompt: |
             A bug was reported in the Slack #${{ github.event.inputs.slack_channel }} channel by ${{ github.event.inputs.reported_by }}.
 
@@ -65,10 +63,10 @@ jobs:
             2. Explore the codebase to find the relevant code that is causing this issue.
             3. Implement a minimal, focused fix — do not refactor unrelated code.
             4. Make sure the fix is correct and does not introduce new issues.
-            5. Open a pull request with:
-               - A clear title describing what was fixed
-               - A body that references the Slack report, explains root cause, and describes the fix
-               - Label it as a bug fix from Slack
+            5. Create a new git branch named fix/slack-bug-<short-description>, commit your changes, and open a pull request using the `gh` CLI with:
+               - A clear title like "fix: <what was fixed>"
+               - A body that explains the root cause, the fix applied, and references the Slack thread URL above
+               - Labels: bug automated-fix slack-reported (add with --label flag, one per --label flag)
 
             IMPORTANT conventions for this project (sanaa-glam):
             - Next.js 14 App Router, TypeScript, Tailwind CSS, PostgreSQL (Supabase), Prisma ORM
