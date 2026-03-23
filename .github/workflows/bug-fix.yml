@@ -56,26 +56,17 @@ jobs:
           mode: agent
           model: claude-opus-4-6
           branch_prefix: "fix/slack-bug"
-          allowed_tools: "Bash,Read,Write,Edit,Glob,Grep"
-          settings: |
-            {
-              "permissions": {
-                "allow": [
-                  "Bash(git checkout*)",
-                  "Bash(git add*)",
-                  "Bash(git commit*)",
-                  "Bash(git push*)",
-                  "Bash(git status*)",
-                  "Bash(git diff*)",
-                  "Bash(git log*)",
-                  "Bash(gh pr create*)",
-                  "Bash(gh pr list*)",
-                  "Bash(gh label*)",
-                  "Bash(npm run lint*)",
-                  "Bash(npx tsc*)"
-                ]
-              }
-            }
+          allowedTools: |
+            - Read
+            - Write
+            - Edit
+            - Glob
+            - Grep
+            - Bash(git *)
+            - Bash(gh pr *)
+            - Bash(gh label *)
+            - Bash(npm run *)
+            - Bash(npx *)
           direct_prompt: |
             A bug was reported in the Slack #${{ github.event.inputs.slack_channel }} channel by ${{ github.event.inputs.reported_by }}.
 
@@ -92,10 +83,14 @@ jobs:
             2. Explore the codebase to find the relevant code that is causing this issue.
             3. Implement a minimal, focused fix — do not refactor unrelated code.
             4. Make sure the fix is correct and does not introduce new issues.
-            5. Create a new git branch named fix/slack-bug-<short-description>, commit your changes, and open a pull request using the `gh` CLI with:
-               - A clear title like "fix: <what was fixed>"
-               - A body that explains the root cause, the fix applied, and references the Slack thread URL above
-               - Labels: bug automated-fix slack-reported (add with --label flag, one per --label flag)
+            5. Complete the full git workflow in this exact order:
+               a. Run: git checkout -b fix/slack-bug-<short-description>
+               b. Edit the file(s) to apply the fix
+               c. Run: git add <changed files>
+               d. Run: git commit -m "fix: <description>"
+               e. Run: git push -u origin fix/slack-bug-<short-description>
+               f. Run: gh pr create --title "fix: <description>" --body "<body>" --label bug --label automated-fix --label slack-reported
+               The PR body must explain the root cause, the fix applied, and include the Slack thread URL above.
 
             IMPORTANT conventions for this project (sanaa-glam):
             - Next.js 14 App Router, TypeScript, Tailwind CSS, PostgreSQL (Supabase), Prisma ORM
