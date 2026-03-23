@@ -43,13 +43,20 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Configure git
+        run: |
+          git config --global user.email "claude-bot@sanaaglam.com"
+          git config --global user.name "Claude Bot"
+
       - name: Run Claude Code to fix the bug
         uses: anthropics/claude-code-action@beta
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           mode: agent
+          model: claude-opus-4-6
           branch_prefix: "fix/slack-bug"
+          allowed_tools: "Bash,Read,Write,Edit,Glob,Grep"
           direct_prompt: |
             A bug was reported in the Slack #${{ github.event.inputs.slack_channel }} channel by ${{ github.event.inputs.reported_by }}.
 
