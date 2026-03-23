@@ -47,6 +47,7 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          mode: agent
           branch_prefix: "fix/slack-bug"
           commit_message_prefix: "fix:"
           create_pull_request: "true"
