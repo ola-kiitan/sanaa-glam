@@ -24,7 +24,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: path === "" ? 1 : 0.7,
   }));
 
-  const serviceSlugs = await getServiceSlugs();
+  let serviceSlugs: { slug: string }[] = [];
+  try {
+    serviceSlugs = await getServiceSlugs();
+  } catch {
+    // Database unreachable at build time — sitemap will omit service URLs
+  }
   const serviceRoutes = serviceSlugs.map(({ slug }) => ({
     url: `${siteUrl}/services/${slug}`,
     lastModified: now,

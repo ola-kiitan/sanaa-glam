@@ -21,7 +21,14 @@ type ServiceDetailPageProps = {
 };
 
 export async function generateStaticParams() {
-  return getServiceSlugs();
+  try {
+    return await getServiceSlugs();
+  } catch {
+    // If the database is unreachable at build time (e.g. Supabase pooler not ready),
+    // return empty array so the build succeeds. Pages are generated on-demand at runtime
+    // because dynamicParams defaults to true.
+    return [];
+  }
 }
 
 export async function generateMetadata({ params }: ServiceDetailPageProps): Promise<Metadata> {
