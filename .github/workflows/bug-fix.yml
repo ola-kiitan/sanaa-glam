@@ -57,6 +57,25 @@ jobs:
           model: claude-opus-4-6
           branch_prefix: "fix/slack-bug"
           allowed_tools: "Bash,Read,Write,Edit,Glob,Grep"
+          settings: |
+            {
+              "permissions": {
+                "allow": [
+                  "Bash(git checkout*)",
+                  "Bash(git add*)",
+                  "Bash(git commit*)",
+                  "Bash(git push*)",
+                  "Bash(git status*)",
+                  "Bash(git diff*)",
+                  "Bash(git log*)",
+                  "Bash(gh pr create*)",
+                  "Bash(gh pr list*)",
+                  "Bash(gh label*)",
+                  "Bash(npm run lint*)",
+                  "Bash(npx tsc*)"
+                ]
+              }
+            }
           direct_prompt: |
             A bug was reported in the Slack #${{ github.event.inputs.slack_channel }} channel by ${{ github.event.inputs.reported_by }}.
 
