@@ -189,16 +189,22 @@ export async function POST(request: NextRequest) {
       const { channel, ts } = event.item;
       const threadTs = ts; // top-level message ts == thread_ts
 
+      console.log(`Fetching thread: channel=${channel} ts=${threadTs}`);
+
       // Fetch the full thread
       const messages = await fetchThread(channel, threadTs);
+      console.log(`Thread messages fetched: ${messages.length}`);
       if (messages.length === 0) return;
 
       // Build context
       const reporterName = await fetchUserName(event.item_user || event.user);
+      console.log(`Reporter: ${reporterName}`);
       const workspaceUrl = process.env.SLACK_WORKSPACE_URL ?? "https://slack.com";
       const threadUrl = `${workspaceUrl}/archives/${channel}/p${threadTs.replace(".", "")}`;
       const bugDescription = buildBugDescription(messages, threadUrl);
       const channelName = process.env.SLACK_BUG_CHANNEL_NAME ?? "bug-support";
+
+      console.log(`Dispatching to GitHub: summary="${`Bug reported by ${reporterName} in #${channelName}`}"`);
 
       // Trigger the GitHub Actions workflow
       const triggered = await triggerGitHubWorkflow({
