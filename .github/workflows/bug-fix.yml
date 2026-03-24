@@ -5,15 +5,15 @@ on:
   workflow_dispatch:
     inputs:
       bug_summary:
-        description: 'Short summary of the bug from Slack'
+        description: "Short summary of the bug from Slack"
         required: true
         type: string
       bug_context:
-        description: 'Full Slack thread with all context'
+        description: "Full Slack thread with all context"
         required: true
         type: string
       slack_link:
-        description: 'Link back to the Slack thread'
+        description: "Link back to the Slack thread"
         required: false
         type: string
 
@@ -42,6 +42,22 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          settings: |
+            {
+              "permissions": {
+                "allow": [
+                  "Bash",
+                  "Read",
+                  "Write",
+                  "Edit",
+                  "MultiEdit",
+                  "Glob",
+                  "Grep"
+                ]
+              }
+            }
+          claude_args: |
+            --model claude-sonnet-4-20250514
           prompt: |
             A bug was reported in Slack. Here is the context:
 
@@ -79,7 +95,3 @@ jobs:
                     --label slack-reported \
                     --body "<body with root cause, fix applied,
                     and the Slack thread URL>"
-
-          claude_args: |
-            --model claude-sonnet-4-20250514
-            --allowedTools "Read,Write,Edit,MultiEdit,Glob,Grep,Bash(git *),Bash(gh pr *),Bash(gh label *),Bash(npm test *),Bash(npm run *),Bash(npx *)"
