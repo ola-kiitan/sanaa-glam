@@ -104,10 +104,9 @@ function buildBugDescription(messages: SlackMessage[], threadUrl: string): strin
 // ─── GitHub Actions trigger ───────────────────────────────────────────────────
 
 async function triggerGitHubWorkflow(inputs: {
-  bug_description: string;
-  slack_thread_url: string;
-  slack_channel: string;
-  reported_by: string;
+  bug_summary: string;
+  bug_context: string;
+  slack_link: string;
 }): Promise<boolean> {
   const token = process.env.GITHUB_PAT;
   const repo = process.env.GITHUB_REPO; // e.g. "your-org/sanaa-glam"
@@ -198,10 +197,9 @@ export async function POST(request: NextRequest) {
 
       // Trigger the GitHub Actions workflow
       const triggered = await triggerGitHubWorkflow({
-        bug_description: bugDescription,
-        slack_thread_url: threadUrl,
-        slack_channel: channelName,
-        reported_by: reporterName,
+        bug_summary: `Bug reported by ${reporterName} in #${channelName}`,
+        bug_context: bugDescription,
+        slack_link: threadUrl,
       });
 
       if (triggered) {
