@@ -1,32 +1,31 @@
-name: Slack Bug Auto-Fix
+# .github/workflows/claude-bug-fix.yml
+name: Claude Bug Fix
 
 on:
   workflow_dispatch:
     inputs:
-      bug_description:
-        description: "Bug report extracted from Slack thread"
+      bug_summary:
+        description: 'Short summary of the bug from Slack'
         required: true
         type: string
-      slack_thread_url:
-        description: "Link to the Slack thread for context"
-        required: false
+      bug_context:
+        description: 'Full Slack thread with all context'
+        required: true
         type: string
-      slack_channel:
-        description: "Slack channel where the bug was reported"
-        required: false
-        type: string
-      reported_by:
-        description: "Slack user who reported the bug"
+      slack_link:
+        description: 'Link back to the Slack thread'
         required: false
         type: string
 
 jobs:
   fix-bug:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: write
       pull-requests: write
       issues: write
+      id-token: write
 
     steps:
       - name: Checkout repository
@@ -34,68 +33,53 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "npm"
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Configure git
+      - name: Configure git identity
         run: |
-          git config --global user.email "claude-bot@sanaaglam.com"
+          git config --global user.email "claude-bot@your-domain.com"
           git config --global user.name "Claude Bot"
 
       - name: Run Claude Code to fix the bug
-        uses: anthropics/claude-code-action@beta
+        uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          mode: agent
-          model: claude-opus-4-6
-          branch_prefix: "fix/slack-bug"
-          allowedTools: |
-            - Read
-            - Write
-            - Edit
-            - Glob
-            - Grep
-            - Bash(git *)
-            - Bash(gh pr *)
-            - Bash(gh label *)
-            - Bash(npm run *)
-            - Bash(npx *)
-          direct_prompt: |
-            A bug was reported in the Slack #${{ github.event.inputs.slack_channel }} channel by ${{ github.event.inputs.reported_by }}.
+          prompt: |
+            A bug was reported in Slack. Here is the context:
 
-            The full thread content has already been extracted and is provided below.
-            DO NOT attempt to fetch or open the Slack URL — it requires authentication and is only included for reference in the PR body.
+            **Summary:** ${{ inputs.bug_summary }}
 
-            **Slack thread (reference link only):** ${{ github.event.inputs.slack_thread_url }}
+            **Full thread (includes reproduction steps,
+            developer notes, and follow-up discussion):**
 
-            **Bug report (full thread content):**
-            ${{ github.event.inputs.bug_description }}
+            ${{ inputs.bug_context }}
+
+            DO NOT attempt to fetch or open this URL — it requires
+            authentication and is only included for reference in
+            the PR body:
+            **Slack thread:** ${{ inputs.slack_link }}
 
             Your task:
-            1. Read and understand the bug report above carefully.
-            2. Explore the codebase to find the relevant code that is causing this issue.
-            3. Implement a minimal, focused fix — do not refactor unrelated code.
-            4. Make sure the fix is correct and does not introduce new issues.
-            5. Complete the full git workflow in this exact order:
-               a. Run: git checkout -b fix/slack-bug-<short-description>
-               b. Edit the file(s) to apply the fix
-               c. Run: git add <changed files>
-               d. Run: git commit -m "fix: <description>"
-               e. Run: git push -u origin fix/slack-bug-<short-description>
-               f. Run: gh pr create --title "fix: <description>" --body "<body>" --label bug --label automated-fix --label slack-reported
-               The PR body must explain the root cause, the fix applied, and include the Slack thread URL above.
+            1. Read the bug report carefully. Pay attention to
+               reproduction steps and any file paths or component
+               names mentioned in the thread.
+            2. Search the codebase to locate the relevant files.
+            3. Identify the root cause.
+            4. Implement a minimal, focused fix. Do not refactor
+               unrelated code.
+            5. Run existing tests to make sure nothing breaks.
+            6. Complete the full git workflow. Run each command
+               as a SEPARATE Bash call — do not chain with && or ;
+               a. git checkout -b fix/slack-bug-<short-slug>
+               b. git add <changed files>
+               c. git commit -m "fix: <description>"
+               d. git push -u origin fix/slack-bug-<short-slug>
+               e. gh pr create \
+                    --title "fix: <description>" \
+                    --label bug \
+                    --label automated-fix \
+                    --label slack-reported \
+                    --body "<body with root cause, fix applied,
+                    and the Slack thread URL>"
 
-            IMPORTANT conventions for this project (sanaa-glam):
-            - Next.js 14 App Router, TypeScript, Tailwind CSS, PostgreSQL (Supabase), Prisma ORM
-            - All date/time logic uses `Europe/Berlin` timezone via `TIMEZONE` constant in `src/lib/constants.ts`
-            - Use `fromZonedTime()` (Berlin→UTC for storage) and `formatInTimeZone()` (UTC→Berlin for display)
-            - API routes return `{ success: boolean, error?: string, data?: any }`
-            - Use server components by default; only add `"use client"` for interactive components
-            - Price fields are `Decimal` in DB — convert with `Number()` for calculations
+          claude_args: |
+            --model claude-sonnet-4-20250514
+            --allowedTools "Read,Write,Edit,MultiEdit,Glob,Grep,Bash(git *),Bash(gh pr *),Bash(gh label *),Bash(npm test *),Bash(npm run *),Bash(npx *)"
