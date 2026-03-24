@@ -151,6 +151,8 @@ export async function POST(request: NextRequest) {
   const rawBody = await request.text();
   const body = JSON.parse(rawBody);
 
+  console.log("EVENT:", JSON.stringify(body, null, 2));
+
   // Handle URL verification challenge BEFORE signature check.
   // Slack sends this once when you first save the Request URL in the app config.
   if (body.type === "url_verification") {
@@ -206,7 +208,7 @@ export async function POST(request: NextRequest) {
       });
 
       if (triggered) {
-        console.log(`Bug fix workflow triggered for thread ${threadTs} in ${channel}`);
+        console.log("Slack notified, workflow dispatched");
       }
     } catch (err) {
       console.error("Error processing Slack bug reaction:", err);
