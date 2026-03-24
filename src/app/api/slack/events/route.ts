@@ -119,7 +119,7 @@ async function triggerGitHubWorkflow(inputs: {
   const [owner, repoName] = repo.split("/");
   const url = `https://api.github.com/repos/${owner}/${repoName}/actions/workflows/bug-fix.yml/dispatches`;
 
-  const res = await fetch(url, {
+  const dispatchRes = await fetch(url, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -133,9 +133,12 @@ async function triggerGitHubWorkflow(inputs: {
     }),
   });
 
-  if (!res.ok) {
-    const text = await res.text();
-    console.error("GitHub workflow dispatch failed:", res.status, text);
+  const dispatchStatus = dispatchRes.status;
+  const dispatchBody = await dispatchRes.text();
+  console.log(`GitHub dispatch: ${dispatchStatus} ${dispatchBody}`);
+
+  if (!dispatchRes.ok) {
+    console.error("GitHub workflow dispatch failed:", dispatchStatus, dispatchBody);
     return false;
   }
 
