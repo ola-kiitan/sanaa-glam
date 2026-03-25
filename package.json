@@ -14,6 +14,7 @@
     "@react-email/components": "^1.0.7",
     "@remotion/player": "^4.0.422",
     "@remotion/transitions": "^4.0.422",
+    "@vercel/functions": "^3.4.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",

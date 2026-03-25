@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { waitUntil } from '@vercel/functions';
 import crypto from 'crypto';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -231,7 +232,8 @@ export async function POST(request: NextRequest) {
   console.log('Event passed all filters');
 
   // Process asynchronously — return 200 immediately so Slack doesn't retry
-  void (async () => {
+  // Use waitUntil so Vercel keeps the function alive until the work completes
+  waitUntil((async () => {
     try {
       const { channel, ts } = event.item;
       const threadTs = ts; // top-level message ts == thread_ts
@@ -272,7 +274,7 @@ export async function POST(request: NextRequest) {
     } catch (err) {
       console.error('Error processing Slack bug reaction:', err);
     }
-  })();
+  })());
 
   return NextResponse.json({ ok: true });
 }
