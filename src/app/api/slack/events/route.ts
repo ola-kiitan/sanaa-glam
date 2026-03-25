@@ -76,13 +76,29 @@ async function fetchThread(
   threadTs: string
 ): Promise<SlackMessage[]> {
   const token = process.env.SLACK_BOT_TOKEN;
+  if (!token) {
+    console.error('SLACK_BOT_TOKEN is not set');
+    return [];
+  }
+
   const url = `https://slack.com/api/conversations.replies?channel=${channel}&ts=${threadTs}&limit=50`;
+  console.log(`fetchThread: calling Slack API for channel=${channel} ts=${threadTs}`);
 
   const res = await fetch(url, {
     headers: { Authorization: `Bearer ${token}` },
   });
 
-  const data = (await res.json()) as SlackThreadResponse;
+  const rawText = await res.text();
+  console.log(`fetchThread: status=${res.status} body=${rawText.substring(0, 500)}`);
+
+  let data: SlackThreadResponse;
+  try {
+    data = JSON.parse(rawText) as SlackThreadResponse;
+  } catch {
+    console.error('fetchThread: failed to parse response as JSON');
+    return [];
+  }
+
   if (!data.ok) {
     console.error('Failed to fetch Slack thread:', data.error);
     return [];
