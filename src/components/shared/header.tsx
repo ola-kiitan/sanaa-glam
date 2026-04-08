@@ -64,7 +64,7 @@ export function Header() {
             className="rounded-full"
             priority
           />
-          <span className="font-serif text-lg font-bold text-plum-dark">
+          <span className="font-serif text-lg font-bold text-destructive">
             Sanaa Glam
           </span>
         </Link>
